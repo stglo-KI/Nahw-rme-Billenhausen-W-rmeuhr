@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nachwärme Uhr - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #1a2e1a 0%, #0f1f0f 50%, #0a150a 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 20px;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(ellipse at 20% 80%, rgba(218, 165, 32, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, rgba(34, 139, 34, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #FFD700, #DAA520, #228B22);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle { color: #aaa; font-size: 1rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.2s; }
+        .stat-card:nth-child(5) { animation-delay: 0.25s; }
+        .stat-card:nth-child(6) { animation-delay: 0.3s; }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(218, 165, 32, 0.3);
+            border-color: rgba(255, 215, 0, 0.4);
+        }
+
+        .stat-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #FFD700; margin-bottom: 5px; }
+        .stat-label { color: #aaa; font-size: 0.8rem; }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.6s ease-out 0.4s backwards;
+        }
+
+        .input-section h2 { font-size: 1.3rem; margin-bottom: 15px; color: #FFD700; }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .input-wrapper { flex: 1; min-width: 150px; max-width: 250px; }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(184, 134, 11, 0.4);
+            border-radius: 8px;
+            color: #e8e8e8;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #DAA520;
+            box-shadow: 0 0 10px rgba(218, 165, 32, 0.3);
+        }
+
+        .input-wrapper input::placeholder { color: #888; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .data-table-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            animation: fadeInUp 0.6s ease-out 0.7s backwards;
+        }
+
+        .data-table-section h2 { font-size: 1.3rem; margin-bottom: 15px; color: #90EE90; }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        thead { background: rgba(255, 215, 0, 0.15); }
+
+        th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #FFD700;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.4);
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        tbody tr { transition: all 0.3s ease; }
+        tbody tr:hover { background: rgba(255, 215, 0, 0.1); }
+
+        .timestamp { color: #aaa; }
+        .value { color: #FFD700; font-weight: 600; }
+        .verbrauch { color: #DAA520; font-weight: 500; }
+
+        .editable:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+        }
+
+        .editable input {
+            background: rgba(50, 40, 0, 0.4);
+            border: 1px solid #DAA520;
+            color: #FFD700;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        tbody tr { transition: all 0.3s ease; }
+        tbody tr:hover { background: rgba(139, 69, 19, 0.1); }
+
+        .timestamp { color: #aaa; }
+
+        .editable {
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .editable:hover {
+            background: rgba(139, 69, 19, 0.3);
+            color: #D2691E;
+        }
+
+        .editable input {
+            width: 100px;
+            padding: 4px 8px;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #8B4513;
+            border-radius: 4px;
+            color: #90EE90;
+        }
+
+        .value { color: #90EE90; font-weight: 600; }
+        .verbrauch { color: #D2691E; font-weight: 500; }
+
+        .action-btns { display: flex; gap: 8px; }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete {
+            background: rgba(255, 82, 82, 0.2);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: #ff5252;
+        }
+
+        .btn-delete:hover { background: rgba(255, 82, 82, 0.4); }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #DAA520, #FFD700);
+            color: #1a1a1a;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(218, 165, 32, 0.5);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show { transform: translateX(0); }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 1.2rem; }
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #B8860B, #DAA520);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(184, 134, 11, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(184, 134, 11, 0.2);
+            border: 1px solid rgba(218, 165, 32, 0.4);
+            color: #DAA520;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(184, 134, 11, 0.4);
+        }
+
+        .btn-export {
+            background: rgba(218, 165, 32, 0.15);
+            border: 1px solid rgba(218, 165, 32, 0.3);
+            color: #DAA520;
+        }
+
+        .btn-export:hover {
+            background: rgba(218, 165, 32, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification">✓ Erfolgreich gespeichert!</div>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="Nahwarme Logo-final_weiss-806e5840.webp" alt="Nahwärme Billenhausen">
+            </div>
+            <h1>Nachwärme Uhr</h1>
+            <p class="subtitle">Dashboard zur Überwachung Ihrer Energieverbrauchsdaten</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="totalValue">0</div>
+                <div class="stat-label">Gesamtverbrauch (kWh)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="averageValue">0</div>
+                <div class="stat-label">Ø Verbrauch/Eintrag</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-value" id="maxValue">0</div>
+                <div class="stat-label">Höchster Verbrauch</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔢</div>
+                <div class="stat-value" id="currentStand">0</div>
+                <div class="stat-label">Aktueller Zählerstand</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🌿</div>
+                <div class="stat-value" id="monthlyConsumption">0</div>
+                <div class="stat-label">Monatsverbrauch</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🌳</div>
+                <div class="stat-value" id="yearlyConsumption">0</div>
+                <div class="stat-label">Jahresverbrauch</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h2>📝 Zählerstand erfassen</h2>
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="number" id="zaehlerstand" placeholder="Zählerstand (kWh)" step="0.01">
+                </div>
+                <button class="btn btn-primary" onclick="addCurrentEntry()">✓ Jetzt erfassen</button>
+            </div>
+            
+            <h2 style="margin-top: 20px;">📅 Rückwirkend eintragen</h2>
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="date" id="entryDate">
+                </div>
+                <div class="input-wrapper">
+                    <input type="time" id="entryTime">
+                </div>
+                <div class="input-wrapper">
+                    <input type="number" id="retroStand" placeholder="Zählerstand" step="0.01">
+                </div>
+                <button class="btn btn-secondary" onclick="addRetroEntry()">Hinzufügen</button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-export" onclick="exportCSV()">📥 CSV Export</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📤 Daten importieren</button>
+                <button class="btn btn-secondary" onclick="loadFromDataJSON()">📂 Aus data.json laden</button>
+                <button class="btn btn-secondary" onclick="addTestData()">🧪 Testdaten hinzufügen</button>
+                <button class="btn btn-secondary" onclick="clearAllData()">🗑️ Alle Daten löschen</button>
+            </div>
+            <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileLoad(this)">
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>🌿 Monatlicher Verbrauch (12 Monate)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>🌳 Jährlicher Verbrauch (10 Jahre)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="yearlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-table-section">
+            <h2>📋 Alle Einträge</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Datum & Uhrzeit</th>
+                        <th>Zählerstand (kWh)</th>
+                        <th>Verbrauch (kWh)</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'nachwaerme_data';
+        let data = [];
+        let monthlyChart, yearlyChart;
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                data = JSON.parse(stored);
+            } else {
+                // Keine Daten vorhanden - initialisiere mit leerem Array
+                data = [];
+            }
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        }
+
+        // Daten aus JSON-Datei laden
+        async function tryLoadFromFile() {
+            try {
+                const response = await fetch('Datenbank/data.json');
+                if (response.ok) {
+                    const fileData = await response.json();
+                    if (fileData && Array.isArray(fileData) && fileData.length > 0 && data.length === 0) {
+                        data = fileData.map(entry => ({
+                            id: entry.id || generateId(),
+                            timestamp: entry.timestamp,
+                            zaehlerstand: entry.zaehlerstand || entry.value || 0
+                        }));
+                        data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        saveData();
+                        console.log('Daten aus Datenbank/data.json geladen');
+                    }
+                }
+            } catch (e) {
+                console.log('Keine Datenbank/data.json gefunden oder Zugriff verweigert');
+            }
+        }
+
+        async function loadFromDataJSON() {
+            try {
+                const response = await fetch('Datenbank/data.json');
+                if (response.ok) {
+                    const fileData = await response.json();
+                    if (fileData && Array.isArray(fileData) && fileData.length > 0 && data.length === 0) {
+                        data = fileData.map(entry => ({
+                            id: entry.id || generateId(),
+                            timestamp: entry.timestamp,
+                            zaehlerstand: entry.zaehlerstand || entry.value || 0
+                        }));
+                        data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        saveData();
+                        console.log('Daten aus data.json geladen');
+                    }
+                }
+            } catch (e) {
+                // Datei nicht gefunden oder CORS-Fehler - ignore
+                console.log('Keine data.json gefunden oder Zugriff verweigert');
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function calculateConsumption() {
+            let consumption = [];
+            for (let i = 0; i < data.length; i++) {
+                let verbrauch = null;
+                if (i > 0) {
+                    verbrauch = data[i].zaehlerstand - data[i-1].zaehlerstand;
+                }
+                consumption.push({
+                    ...data[i],
+                    verbrauch: verbrauch
+                });
+            }
+            return consumption;
+        }
+
+        function getMonthlyData() {
+            const consumption = calculateConsumption();
+            const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+            
+            // Letzte 12 Monate initialisieren
+            const months = {};
+            const now = new Date();
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                months[key] = 0;
+            }
+            
+            // Daten aggregieren
+            consumption.forEach(entry => {
+                if (entry.verbrauch !== null) {
+                    const date = new Date(entry.timestamp);
+                    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    if (months[key] !== undefined) {
+                        months[key] += entry.verbrauch;
+                    }
+                }
+            });
+
+            const sortedKeys = Object.keys(months).sort();
+            return {
+                labels: sortedKeys.map(k => monthNames[parseInt(k.split('-')[1]) - 1] + ' ' + k.split('-')[0]),
+                values: sortedKeys.map(k => Math.round(months[k] * 100) / 100)
+            };
+        }
+
+        function getYearlyData() {
+            const consumption = calculateConsumption();
+            const years = {};
+            const currentYear = new Date().getFullYear();
+            
+            for (let i = currentYear - 9; i <= currentYear; i++) {
+                years[i] = 0;
+            }
+            
+            consumption.forEach(entry => {
+                if (entry.verbrauch !== null) {
+                    const year = new Date(entry.timestamp).getFullYear();
+                    if (years[year] !== undefined) {
+                        years[year] += entry.verbrauch;
+                    }
+                }
+            });
+
+            return {
+                labels: Object.keys(years),
+                values: Object.values(years).map(v => Math.round(v * 100) / 100)
+            };
+        }
+
+        function updateStats() {
+            const consumption = calculateConsumption();
+            
+            const total = consumption.reduce((sum, d) => sum + (d.verbrauch || 0), 0);
+            const verbrauchsValues = consumption.filter(d => d.verbrauch !== null).map(d => d.verbrauch);
+            const avg = verbrauchsValues.length > 0 ? total / verbrauchsValues.length : 0;
+            const max = verbrauchsValues.length > 0 ? Math.max(...verbrauchsValues) : 0;
+            const current = data.length > 0 ? data[data.length - 1].zaehlerstand : 0;
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            const monthly = consumption
+                .filter(d => {
+                    const date = new Date(d.timestamp);
+                    return d.verbrauch !== null && date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+                })
+                .reduce((sum, d) => sum + d.verbrauch, 0);
+
+            const yearly = consumption
+                .filter(d => {
+                    const date = new Date(d.timestamp);
+                    return d.verbrauch !== null && date.getFullYear() === currentYear;
+                })
+                .reduce((sum, d) => sum + d.verbrauch, 0);
+
+            document.getElementById('totalValue').textContent = Math.round(total).toLocaleString('de-DE');
+            document.getElementById('averageValue').textContent = Math.round(avg).toLocaleString('de-DE');
+            document.getElementById('maxValue').textContent = Math.round(max).toLocaleString('de-DE');
+            document.getElementById('currentStand').textContent = current.toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+            document.getElementById('monthlyConsumption').textContent = Math.round(monthly).toLocaleString('de-DE');
+            document.getElementById('yearlyConsumption').textContent = Math.round(yearly).toLocaleString('de-DE');
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function renderTable() {
+            const consumption = calculateConsumption();
+            const tbody = document.getElementById('dataTable');
+            
+            tbody.innerHTML = consumption.slice().reverse().map((entry, index) => {
+                const originalIndex = data.length - 1 - index;
+                return `
+                <tr>
+                    <td class="timestamp">${formatDate(entry.timestamp)}</td>
+                    <td>
+                        <span class="editable" onclick="editCell(this, ${originalIndex}, 'zaehlerstand')">
+                            ${entry.zaehlerstand.toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}
+                        </span>
+                    </td>
+                    <td class="verbrauch">${entry.verbrauch !== null ? entry.verbrauch.toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1}) : '-'}</td>
+                    <td class="action-btns">
+                        <button class="btn-sm btn-delete" onclick="deleteEntry(${originalIndex})">Löschen</button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function editCell(element, index, field) {
+            const currentValue = data[index][field];
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.value = currentValue;
+            input.step = '0.01';
+            input.onblur = function() { saveEdit(index, field, input.value, element); };
+            input.onkeypress = function(e) { if (e.key === 'Enter') input.blur(); };
+            element.innerHTML = '';
+            element.appendChild(input);
+            input.focus();
+        }
+
+        function saveEdit(index, field, value, element) {
+            const newValue = parseFloat(value);
+            if (isNaN(newValue) || newValue < 0) {
+                renderTable();
+                return;
+            }
+            data[index][field] = newValue;
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            saveData();
+            showNotification('✓ Aktualisiert!');
+            updateStats();
+            renderTable();
+            updateCharts();
+        }
+
+        function deleteEntry(index) {
+            if (confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
+                data.splice(index, 1);
+                saveData();
+                updateStats();
+                renderTable();
+                updateCharts();
+            }
+        }
+
+        function addCurrentEntry() {
+            const input = document.getElementById('zaehlerstand');
+            const value = parseFloat(input.value);
+
+            if (isNaN(value) || value < 0) {
+                alert('Bitte geben Sie einen gültigen Zählerstand ein.');
+                return;
+            }
+
+            const newEntry = {
+                id: generateId(),
+                timestamp: new Date().toISOString(),
+                zaehlerstand: value
+            };
+            
+            data.push(newEntry);
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            saveData();
+            
+            input.value = '';
+            showNotification('✓ Erfolgreich gespeichert!');
+            
+            // Alles neu rendern
+            updateStats();
+            renderTable();
+            updateCharts();
+        }
+
+        function addRetroEntry() {
+            const dateInput = document.getElementById('entryDate').value;
+            const timeInput = document.getElementById('entryTime').value || '00:00';
+            const standInput = document.getElementById('retroStand');
+            const value = parseFloat(standInput.value);
+
+            if (!dateInput || isNaN(value) || value < 0) {
+                alert('Bitte geben Sie Datum und Zählerstand ein.');
+                return;
+            }
+
+            const timestamp = new Date(`${dateInput}T${timeInput}:00`).toISOString();
+
+            const newEntry = {
+                id: generateId(),
+                timestamp: timestamp,
+                zaehlerstand: value
+            };
+
+            data.push(newEntry);
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            saveData();
+            
+            standInput.value = '';
+            document.getElementById('entryDate').value = '';
+            document.getElementById('entryTime').value = '';
+            showNotification('✓ Erfolgreich gespeichert!');
+            
+            updateStats();
+            renderTable();
+            updateCharts();
+        }
+
+        function showNotification(message) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 2500);
+        }
+
+        function exportCSV() {
+            const consumption = calculateConsumption();
+            let csv = 'Datum;Uhrzeit;Zählerstand (kWh);Verbrauch (kWh)\n';
+            
+            consumption.forEach(entry => {
+                const date = new Date(entry.timestamp);
+                const dateStr = date.toLocaleDateString('de-DE');
+                const timeStr = date.toLocaleTimeString('de-DE');
+                const verbrauch = entry.verbrauch !== null ? entry.verbrauch.toString().replace('.', ',') : '';
+                csv += `${dateStr};${timeStr};${entry.zaehlerstand.toString().replace('.', ',')};${verbrauch}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().split('T')[0];
+            link.href = URL.createObjectURL(blob);
+            link.download = `nachwaerme_${timestamp}.csv`;
+            link.click();
+            showNotification('✓ CSV exportiert!');
+        }
+
+        function importData() {
+            document.getElementById('fileInput').click();
+        }
+
+        async function loadFromDataJSON() {
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Datei nicht gefunden');
+                const fileData = await response.json();
+                
+                if (!Array.isArray(fileData) || fileData.length === 0) {
+                    alert('data.json ist leer oder ungültig');
+                    return;
+                }
+                
+                data = fileData.map(entry => ({
+                    id: entry.id || generateId(),
+                    timestamp: entry.timestamp,
+                    zaehlerstand: entry.zaehlerstand || entry.value || 0
+                }));
+                data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                saveData();
+                showNotification('✓ Daten aus data.json geladen!');
+                updateStats();
+                renderTable();
+                if (!monthlyChart || !yearlyChart) {
+                    initCharts();
+                } else {
+                    updateCharts();
+                }
+            } catch (e) {
+                alert('Fehler beim Laden: ' + e.message + '\n\nHinweis: Wenn Sie die Datei lokal öffnen, müssen Sie die Daten manuell importieren.');
+            }
+        }
+
+        function debugData() {
+            console.log('Aktuelle Daten:', data);
+            console.log('LocalStorage:', localStorage.getItem(STORAGE_KEY));
+            alert('Daten in der Konsole (F12)');
+        }
+
+        function addTestData() {
+            const now = new Date();
+            const testData = [
+                { id: generateId(), timestamp: new Date(now.getFullYear(), 0, 15).toISOString(), zaehlerstand: 10000 },
+                { id: generateId(), timestamp: new Date(now.getFullYear(), 1, 15).toISOString(), zaehlerstand: 10250 },
+                { id: generateId(), timestamp: new Date(now.getFullYear(), 2, 15).toISOString(), zaehlerstand: 10450 },
+                { id: generateId(), timestamp: new Date(now.getFullYear(), 3, 15).toISOString(), zaehlerstand: 10600 },
+                { id: generateId(), timestamp: new Date(now.getFullYear(), 4, 15).toISOString(), zaehlerstand: 10750 },
+                { id: generateId(), timestamp: new Date(now.getFullYear(), 5, 15).toISOString(), zaehlerstand: 10850 },
+            ];
+            
+            data = testData;
+            saveData();
+            showNotification('✓ Testdaten hinzugefügt!');
+            updateStats();
+            renderTable();
+            if (!monthlyChart || !yearlyChart) {
+                initCharts();
+            } else {
+                updateCharts();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Möchten Sie wirklich ALLE Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden!')) {
+                data = [];
+                saveData();
+                showNotification('✓ Alle Daten gelöscht!');
+                updateStats();
+                renderTable();
+                updateCharts();
+            }
+        }
+
+        function handleFileLoad(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        data = imported.map(entry => ({
+                            id: entry.id || generateId(),
+                            timestamp: entry.timestamp,
+                            zaehlerstand: entry.zaehlerstand || entry.value || 0
+                        }));
+                        data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        saveData();
+                        showNotification('✓ Daten importiert!');
+                        updateStats();
+                        renderTable();
+                        if (!monthlyChart || !yearlyChart) {
+                            initCharts();
+                        } else {
+                            updateCharts();
+                        }
+                    } else {
+                        alert('Ungültiges Datenformat.');
+                    }
+                } catch (err) {
+                    alert('Fehler beim Importieren: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function clearAllData() {
+            if (confirm('Möchten Sie wirklich ALLE Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden!')) {
+                data = [];
+                saveData();
+                showNotification('✓ Alle Daten gelöscht!');
+                init();
+            }
+        }
+
+        function createBarGradient(ctx) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(34, 139, 34, 0.9)');
+            gradient.addColorStop(0.5, 'rgba(85, 107, 47, 0.7)');
+            gradient.addColorStop(1, 'rgba(139, 69, 19, 0.3)');
+            return gradient;
+        }
+
+        function createLineGradient(ctx) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(144, 238, 144, 0.4)');
+            gradient.addColorStop(1, 'rgba(34, 139, 34, 0.0)');
+            return gradient;
+        }
+
+        function initCharts() {
+            // Alte Charts zerstören falls vorhanden
+            if (monthlyChart) {
+                monthlyChart.destroy();
+                monthlyChart = null;
+            }
+            if (yearlyChart) {
+                yearlyChart.destroy();
+                yearlyChart = null;
+            }
+            
+            const monthlyData = getMonthlyData();
+            const yearlyData = getYearlyData();
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255, 215, 0, 0.15)' }, ticks: { color: '#DAA520' } },
+                    y: { grid: { color: 'rgba(255, 215, 0, 0.15)' }, ticks: { color: '#DAA520' } }
+                },
+                animation: { duration: 1500, easing: 'easeOutQuart' }
+            };
+
+            const ctx1 = document.getElementById('monthlyChart').getContext('2d');
+            monthlyChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: monthlyData.labels,
+                    datasets: [{
+                        data: monthlyData.values,
+                        backgroundColor: createBarGradient(ctx1),
+                        borderColor: '#FFD700',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: chartOptions
+            });
+
+            const ctx2 = document.getElementById('yearlyChart').getContext('2d');
+            yearlyChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: yearlyData.labels,
+                    datasets: [{
+                        data: yearlyData.values,
+                        borderColor: '#FFD700',
+                        backgroundColor: createLineGradient(ctx2),
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#DAA520',
+                        pointBorderColor: '#FFD700',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 9
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        function createBarGradient(ctx) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(255, 215, 0, 0.9)');
+            gradient.addColorStop(0.5, 'rgba(218, 165, 32, 0.7)');
+            gradient.addColorStop(1, 'rgba(34, 139, 34, 0.4)');
+            return gradient;
+        }
+
+        function createLineGradient(ctx) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+            gradient.addColorStop(1, 'rgba(34, 139, 34, 0.0)');
+            return gradient;
+        }
+
+        function updateCharts() {
+            // Charts neu erstellen
+            initCharts();
+        }
+
+        function init() {
+            loadData();
+            
+            // Immer versuchen, Daten aus JSON zu laden wenn localStorage leer ist
+            if (data.length === 0) {
+                tryLoadFromFile().then(() => {
+                    renderAll();
+                });
+            } else {
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            updateStats();
+            renderTable();
+            if (!monthlyChart || !yearlyChart) {
+                initCharts();
+            } else {
+                updateCharts();
+            }
+        }
+
+        document.getElementById('zaehlerstand').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addCurrentEntry();
+        });
+
+        init();
+    </script>
+</body>
+</html>
